@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  opensearch-db:
+    image: opensearchproject/opensearch-dashboards:1.3.6
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch-web:9200"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
+    ports:
+      - 5601:5601
+    links:
+      - opensearch-web
+    networks:
+      - sandbox
+
+  opensearch-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - cluster.name=docker-cluster
+      - node.name=os-node
+      - cluster.initial_master_nodes=os-node
+      - plugins.security.disabled=true
+      - bootstrap.memory_lock=true
+      - http.host=0.0.0.0
+      - transport.host=127.0.0.1
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - $PWD/.local/opensearch:/usr/share/opensearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - sandbox
+
+networks:
+  sandbox:
